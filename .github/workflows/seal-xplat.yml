@@ -1,0 +1,35 @@
+name: Cross-Platform Tests
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests-mac-os:
+    name: MacOS unit tests
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: ./.github/actions/install-go
+      - name: Tests
+        run: make test
+
+  tests-windows:
+    name: Windows unit tests
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: ./.github/actions/install-go
+      - name: Tests
+        env:
+          CGO_ENABLED: 1
+        run: |
+          PACKAGES=$(go list -mod=vendor ./... | grep -v /vendor/ | grep -v /integration | grep -v 'plugins/snapshots/windows')
+          go test -short -count=1 -mod=vendor -timeout=10m $PACKAGES
